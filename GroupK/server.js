@@ -1,59 +1,35 @@
-const oracledb = require('oracledb');
 const express = require('express');
-const app = express();
+const oracledb = require('oracledb');
+const dbconfig = require('./dbconfig');
 
-const port = 3000;
+const app = express();
+const PORT = 3000;
+
+oracledb.initOracleClient({ libDir: 'E:/instantclient-basic-windows.x64-21.11.0.0.0dbru/instantclient_21_11' });
+
+app.get('/data', async (req, res) => {
+  let connection;
+  try {
+    connection = await oracledb.getConnection(dbconfig);
+    const result = await connection.execute(`SELECT product_id FROM inventory`);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error getting data from the database");
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`Server started on http://localhost:${PORT}`);
+});
 
 app.use(express.static('public'));
 
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-});
-
-process.env.TNS_ADMIN = "/F:/wallet";
-
-
-
-// 在此设置路由和数据库连接，响应客户端请求
-app.get('/getProductInfo/:productId', (req, res) => {
-    const selectedProductId = req.params.productId;
-
-    oracledb.getConnection({
-        user: 'ADMIN',
-        password: 'GroupK123456',
-        connectString: 'adb.eu-paris-1.oraclecloud.com:1522/gbbf3e64fad7831_groupk_high.adb.oraclecloud.com'
-    }, function (err, connection) {
-        if (err) {
-            console.error(err.message);
-            return res.status(500).json({ error: 'Database connection error' });
-        }
-
-        const sql = `
-            SELECT p.name, p.description, i.quantity, p.price
-            FROM products p
-            JOIN inventory i ON p.product_id = i.product_id
-            WHERE i.product_id = :productId
-        `;
-
-        connection.execute(sql, [selectedProductId], function (err, result) {
-            if (err) {
-                console.error(err.message);
-                return res.status(500).json({ error: 'Database query error' });
-            } else {
-                const productInfo = result.rows[0];
-                return res.json({
-                    name: productInfo[0],
-                    description: productInfo[1],
-                    quantity: productInfo[2],
-                    price: productInfo[3]
-                });
-            }
-
-            connection.close(function (err) {
-                if (err) {
-                    console.error(err.message);
-                }
-            });
-        });
-    });
-});

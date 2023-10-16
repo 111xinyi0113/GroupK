@@ -1,48 +1,20 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>商品信息查询</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Viewer</title>
 </head>
 <body>
-    <h1>选择商品：</h1>
-    <select id="productSelect">
-        <option value="1">商品1</option>
-        <option value="2">商品2</option>
-        <option value="3">商品3</option>
-    </select>
-    <br><br>
-    <p>商品名称: <span id="productName"></span></p>
-    <p>商品描述: <span id="productDescription"></span></p>
-    <p>商品数量: <span id="productQuantity"></span></p>
-    <p>商品价格: <span id="productPrice"></span></p>
+    <h1>Data from Oracle Database</h1>
+    <div id="data"></div>
 
-    <script src="server.js"></script>
+    <script>
+        fetch('/data')
+          .then(response => response.json())
+          .then(data => {
+            document.getElementById('data').innerHTML = JSON.stringify(data);
+          });
+    </script>
 </body>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const productSelect = document.getElementById("productSelect");
-        const productName = document.getElementById("productName");
-        const productDescription = document.getElementById("productDescription");
-        const productQuantity = document.getElementById("productQuantity");
-        const productPrice = document.getElementById("productPrice");
-    
-        productSelect.addEventListener("change", function () {
-            const selectedProductId = productSelect.value;
-    
-            // 发送 AJAX 请求到服务器以获取产品信息
-            fetch(`/getProductInfo/${selectedProductId}`)
-                .then(response => response.json())
-                .then(data => {
-                    productName.textContent = data.name;
-                    productDescription.textContent = data.description;
-                    productQuantity.textContent = data.quantity;
-                    productPrice.textContent = data.price;
-                })
-                .catch(error => {
-                    console.error(error);
-                });
-        });
-    });
-</script>
 </html>
